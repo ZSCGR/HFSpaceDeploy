@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% block title %}Deploy to HuggingFace Spaces{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero bg-gradient-to-br from-primary via-secondary to-accent text-primary-content rounded-2xl mb-10 shadow-2xl">
+    <div class="hero-content text-center py-20">
+        <div class="max-w-2xl">
+            <h1 class="text-6xl font-bold mb-6 flex items-center justify-center">
+                <i data-lucide="rocket" class="w-16 h-16 mr-4 animate-pulse"></i>
+                <span data-i18n="hero.title">One-Click Deploy</span>
+            </h1>
+            <p class="text-xl opacity-90 mb-8" data-i18n="hero.subtitle">
+                Deploy to HuggingFace Spaces instantly
+            </p>
+            <div class="stats shadow-lg bg-base-100/20 backdrop-blur">
+                <div class="stat">
+                    <div class="stat-figure text-secondary">
+                        <i data-lucide="zap" class="w-8 h-8"></i>
+                    </div>
+                    <div class="stat-title text-primary-content/80" data-i18n="hero.deployTime">Deploy Time</div>
+                    <div class="stat-value" data-i18n="hero.minutes">2-5min</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-figure text-secondary">
+                        <i data-lucide="server" class="w-8 h-8"></i>
+                    </div>
+                    <div class="stat-title text-primary-content/80" data-i18n="hero.freeHosting">Free Hosting</div>
+                    <div class="stat-value" data-i18n="hero.percentage">100%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
+        <div class="card-body items-center text-center">
+            <div class="w-16 h-16 bg-warning/20 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="zap" class="w-8 h-8 text-warning"></i>
+            </div>
+            <h2 class="card-title" data-i18n="feature.fast.title">Lightning Fast</h2>
+            <p data-i18n="feature.fast.desc">Deploy from Git in minutes</p>
+        </div>
+    </div>
+    <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
+        <div class="card-body items-center text-center">
+            <div class="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="shield-check" class="w-8 h-8 text-success"></i>
+            </div>
+            <h2 class="card-title" data-i18n="feature.secure.title">Secure</h2>
+            <p data-i18n="feature.secure.desc">Full control with your token</p>
+        </div>
+    </div>
+    <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
+        <div class="card-body items-center text-center">
+            <div class="w-16 h-16 bg-info/20 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="activity" class="w-8 h-8 text-info"></i>
+            </div>
+            <h2 class="card-title" data-i18n="feature.monitor.title">Real-time</h2>
+            <p data-i18n="feature.monitor.desc">Live deployment status</p>
+        </div>
+    </div>
+</div>
+
+<!-- Deploy Form -->
+<div class="card bg-base-100 shadow-2xl border border-base-300">
+    <div class="card-body">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="card-title text-3xl flex items-center">
+                <i data-lucide="settings" class="w-8 h-8 mr-3"></i>
+                <span data-i18n="form.title">Configuration</span>
+            </h2>
+            <div class="flex gap-2">
+                <button 
+                    type="button"
+                    onclick="showImportModal()"
+                    class="btn btn-ghost btn-sm"
+                    data-i18n-title="config.import"
+                    title="Import Configuration"
+                >
+                    <i data-lucide="upload" class="w-4 h-4 mr-2"></i>
+                    <span data-i18n="config.import">Import</span>
+                </button>
+                <button 
+                    type="button"
+                    onclick="showExportModal()"
+                    class="btn btn-ghost btn-sm"
+                    data-i18n-title="config.export"
+                    title="Export Configuration"
+                >
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                    <span data-i18n="config.export">Export</span>
+                </button>
+            </div>
+        </div>
+        
+        <form 
+            id="deploy-form"
+            action="/web/deploy"
+            method="POST"
+            class="space-y-6"
+            x-data="{ showAdvanced: false }"
+        >
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-6">
+                    <!-- HuggingFace Token -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-lg">
+                                <i data-lucide="key" class="w-4 h-4 inline mr-2"></i>
+                                <span data-i18n="form.token">HF Token</span>
+                            </span>
+                            <span class="label-text-alt">
+                                <a href="https://huggingface.co/settings/tokens" target="_blank" class="link link-primary" data-i18n="form.token.get">
+                                    Get Token
+                                </a>
+                            </span>
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                name="hf_token" 
+                                data-i18n-placeholder="form.token.placeholder"
+                                placeholder="hf_..." 
+                                class="input input-bordered input-primary w-full pr-12" 
+                                required
+                                x-ref="tokenInput"
+                            >
+                            <button 
+                                type="button"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs p-1"
+                                @click="$refs.tokenInput.type = $refs.tokenInput.type === 'password' ? 'text' : 'password'"
+                                style="z-index: 10;"
+                            >
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <label class="label">
+                            <span class="label-text-alt text-warning">
+                                <i data-lucide="alert-circle" class="w-3 h-3 inline"></i>
+                                <span data-i18n="form.token.hint">Write permission required</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Git Repository URL -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-lg">
+                                <i data-lucide="git-branch" class="w-4 h-4 inline mr-2"></i>
+                                <span data-i18n="form.repo">Git Repository</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="url" 
+                            name="git_repo_url" 
+                            data-i18n-placeholder="form.repo.placeholder"
+                            placeholder="https://github.com/user/repo.git" 
+                            class="input input-bordered input-primary w-full" 
+                            required
+                        >
+                        <label class="label">
+                            <span class="label-text-alt" data-i18n="form.repo.hint">GitHub, GitLab, etc.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Space Name -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-lg">
+                                <i data-lucide="tag" class="w-4 h-4 inline mr-2"></i>
+                                <span data-i18n="form.space">Space Name</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="space_name" 
+                            data-i18n-placeholder="form.space.placeholder"
+                            placeholder="my-app" 
+                            class="input input-bordered input-primary w-full" 
+                            pattern="[a-zA-Z0-9_\-]+" 
+                            required
+                        >
+                        <label class="label">
+                            <span class="label-text-alt" data-i18n="form.space.hint">Letters, numbers, hyphens only</span>
+                        </label>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-lg">
+                                <i data-lucide="file-text" class="w-4 h-4 inline mr-2"></i>
+                                <span data-i18n="form.desc">Description</span>
+                            </span>
+                        </label>
+                        <textarea 
+                            name="description" 
+                            data-i18n-placeholder="form.desc.placeholder"
+                            placeholder="Brief description..." 
+                            class="textarea textarea-bordered textarea-primary h-24"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="divider"></div>
+            
+            <div class="collapse collapse-plus bg-base-200 rounded-lg">
+                <input type="checkbox" x-model="showAdvanced" />
+                <div class="collapse-title text-lg font-medium flex items-center">
+                    <i data-lucide="sliders" class="w-5 h-5 mr-2"></i>
+                    <span data-i18n="form.advanced">Advanced</span>
+                </div>
+                <div class="collapse-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+                        <!-- Deploy Path -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">
+                                    <i data-lucide="folder-open" class="w-4 h-4 inline mr-2"></i>
+                                    <span data-i18n="form.deployPath">Deploy Path</span>
+                                </span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="deploy_path" 
+                                value="/" 
+                                data-i18n-placeholder="form.deployPath.placeholder"
+                                placeholder="/" 
+                                class="input input-bordered w-full" 
+                                pattern="^\.?\/?([\w\-\.\/]*)?$" 
+                            >
+                            <label class="label">
+                                <span class="label-text-alt" data-i18n="form.deployPath.hint">Subdirectory to deploy (default: root)</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Port -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">
+                                    <i data-lucide="wifi" class="w-4 h-4 inline mr-2"></i>
+                                    <span data-i18n="form.port">Port</span>
+                                </span>
+                            </label>
+                            <input 
+                                type="number" 
+                                name="space_port" 
+                                value="7860" 
+                                min="1" 
+                                max="65535" 
+                                class="input input-bordered w-full"
+                            >
+                        </div>
+
+                        <!-- Privacy -->
+                        <div class="form-control">
+                            <label class="label cursor-pointer">
+                                <span class="label-text font-semibold">
+                                    <i data-lucide="lock" class="w-4 h-4 inline mr-2"></i>
+                                    <span data-i18n="form.private">Private Space</span>
+                                </span>
+                                <input type="checkbox" name="private" class="toggle toggle-primary" />
+                            </label>
+                        </div>
+
+                        <!-- Environment Variables -->
+                        <div class="form-control lg:col-span-2">
+                            <label class="label">
+                                <span class="label-text font-semibold">
+                                    <i data-lucide="terminal" class="w-4 h-4 inline mr-2"></i>
+                                    <span data-i18n="form.env">Environment Variables</span>
+                                </span>
+                            </label>
+                            <textarea 
+                                name="env_vars_text" 
+                                data-i18n-placeholder="form.env.placeholder"
+                                placeholder="KEY=value" 
+                                class="textarea textarea-bordered h-32 font-mono text-sm"
+                            ></textarea>
+                            <label class="label">
+                                <span class="label-text-alt" data-i18n="form.env.hint">One per line</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-control mt-8">
+                <button type="submit" class="btn btn-primary btn-lg w-full gap-3">
+                    <i data-lucide="rocket" class="w-6 h-6"></i>
+                    <span data-i18n="form.submit">Deploy</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-base-100/80 backdrop-blur-sm z-50 flex items-center justify-center" style="display: none;">
+    <div class="card bg-base-100 shadow-2xl">
+        <div class="card-body">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="loading loading-spinner loading-lg text-primary"></div>
+                <h3 class="text-xl font-semibold" data-i18n="loading.title">Deploying...</h3>
+                <p class="text-base-content/70" data-i18n="loading.desc">Please wait...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="card bg-info/10 border border-info/20">
+        <div class="card-body">
+            <h3 class="card-title text-info">
+                <i data-lucide="info" class="w-5 h-5"></i>
+                <span data-i18n="req.title">Requirements</span>
+            </h3>
+            <ul class="space-y-2 text-sm">
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-info mt-0.5"></i>
+                    <span data-i18n="req.dockerfile">Repository must contain Dockerfile</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-info mt-0.5"></i>
+                    <span data-i18n="req.token">Token needs write permissions</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-info mt-0.5"></i>
+                    <span data-i18n="req.time">Deployment takes 2-5 minutes</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-info mt-0.5"></i>
+                    <span data-i18n="req.docker">Supports Dockerized apps</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="card bg-warning/10 border border-warning/20">
+        <div class="card-body">
+            <h3 class="card-title text-warning">
+                <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                <span data-i18n="tips.title">Tips</span>
+            </h3>
+            <ul class="space-y-2 text-sm">
+                <li class="flex items-start">
+                    <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-warning mt-0.5"></i>
+                    <span data-i18n="tips.test">Test Dockerfile locally</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-warning mt-0.5"></i>
+                    <span data-i18n="tips.env">Use env vars for secrets</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-warning mt-0.5"></i>
+                    <span data-i18n="tips.size">Keep image size small</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-warning mt-0.5"></i>
+                    <span data-i18n="tips.limits">Check HF resource limits</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Import Configuration Modal -->
+<dialog id="import-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="upload" class="w-5 h-5 inline mr-2"></i>
+            <span data-i18n="config.import.title">Import Configuration</span>
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="alert alert-info">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                <span data-i18n="config.import.info">Paste your configuration JSON or share configuration URL</span>
+            </div>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" data-i18n="config.import.label">Configuration JSON</span>
+                </label>
+                <textarea 
+                    id="import-config-text"
+                    class="textarea textarea-bordered h-48 font-mono text-sm"
+                    data-i18n-placeholder="config.import.placeholder"
+                    placeholder='{"space_name": "my-app", "git_repo_url": "https://github.com/..."}'
+                ></textarea>
+            </div>
+            
+            <div class="modal-action">
+                <button type="button" onclick="importConfig()" class="btn btn-primary">
+                    <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+                    <span data-i18n="config.import.apply">Apply Configuration</span>
+                </button>
+                <form method="dialog">
+                    <button class="btn btn-ghost" data-i18n="config.cancel">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Export Configuration Modal -->
+<dialog id="export-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="download" class="w-5 h-5 inline mr-2"></i>
+            <span data-i18n="config.export.title">Export Configuration</span>
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="alert alert-success">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span data-i18n="config.export.info">Configuration exported successfully</span>
+            </div>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" data-i18n="config.export.label">Configuration JSON</span>
+                    <button 
+                        type="button"
+                        onclick="copyExportConfig()"
+                        class="btn btn-ghost btn-xs"
+                    >
+                        <i data-lucide="copy" class="w-4 h-4 mr-1"></i>
+                        <span data-i18n="config.copy">Copy</span>
+                    </button>
+                </label>
+                <textarea 
+                    id="export-config-text"
+                    class="textarea textarea-bordered h-48 font-mono text-sm"
+                    readonly
+                ></textarea>
+            </div>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" data-i18n="config.export.url">Share URL</span>
+                    <button 
+                        type="button"
+                        onclick="copyShareUrl()"
+                        class="btn btn-ghost btn-xs"
+                    >
+                        <i data-lucide="copy" class="w-4 h-4 mr-1"></i>
+                        <span data-i18n="config.copy">Copy</span>
+                    </button>
+                </label>
+                <input 
+                    id="share-url"
+                    type="text"
+                    class="input input-bordered font-mono text-sm"
+                    readonly
+                >
+            </div>
+            
+            <div class="modal-action">
+                <button type="button" onclick="saveConfigAsFile()" class="btn btn-primary">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                    <span data-i18n="config.export.save">Save as File</span>
+                </button>
+                <form method="dialog">
+                    <button class="btn btn-ghost" data-i18n="config.close">Close</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    // Configuration management
+    const CONFIG_FIELDS = {
+        git_repo_url: 'input[name="git_repo_url"]',
+        space_name: 'input[name="space_name"]',
+        description: 'textarea[name="description"]',
+        deploy_path: 'input[name="deploy_path"]',
+        space_port: 'input[name="space_port"]',
+        private: 'input[name="private"]',
+        env_vars_text: 'textarea[name="env_vars_text"]'
+    };
+    
+    // Check for config in URL on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        checkUrlConfig();
+        
+        // Re-initialize icons after DOM updates
+        setTimeout(() => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }, 100);
+    });
+    
+    // Check URL for config parameter
+    function checkUrlConfig() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const configParam = urlParams.get('config');
+        
+        if (configParam) {
+            try {
+                // Decode base64 and parse JSON
+                const configJson = atob(configParam);
+                const config = JSON.parse(configJson);
+                applyConfiguration(config);
+                
+                // Show success toast
+                showToast(t('config.import.success'), 'success');
+                
+                // Remove config from URL to clean up
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (error) {
+                console.error('Failed to load config from URL:', error);
+                showToast(t('config.import.error'), 'error');
+            }
+        }
+    }
+    
+    // Show import modal
+    function showImportModal() {
+        document.getElementById('import-modal').showModal();
+        // Re-initialize icons in modal
+        setTimeout(() => lucide.createIcons(), 100);
+    }
+    
+    // Show export modal
+    function showExportModal() {
+        const config = extractConfiguration();
+        const configJson = JSON.stringify(config, null, 2);
+        
+        // Set export text
+        document.getElementById('export-config-text').value = configJson;
+        
+        // Generate share URL
+        const encoded = btoa(configJson);
+        const shareUrl = `${window.location.origin}${window.location.pathname}?config=${encoded}`;
+        document.getElementById('share-url').value = shareUrl;
+        
+        document.getElementById('export-modal').showModal();
+        // Re-initialize icons in modal
+        setTimeout(() => lucide.createIcons(), 100);
+    }
+    
+    // Extract current form configuration
+    function extractConfiguration() {
+        const config = {};
+        
+        for (const [field, selector] of Object.entries(CONFIG_FIELDS)) {
+            const element = document.querySelector(selector);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    config[field] = element.checked;
+                } else {
+                    config[field] = element.value;
+                }
+            }
+        }
+        
+        return config;
+    }
+    
+    // Apply configuration to form
+    function applyConfiguration(config) {
+        for (const [field, selector] of Object.entries(CONFIG_FIELDS)) {
+            const element = document.querySelector(selector);
+            if (element && config.hasOwnProperty(field)) {
+                if (element.type === 'checkbox') {
+                    element.checked = config[field];
+                } else {
+                    element.value = config[field];
+                }
+                
+                // Trigger change event for any listeners
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        
+        // Expand advanced settings if any advanced field is set
+        if (config.deploy_path || config.space_port !== 7860 || config.private || config.env_vars_text) {
+            const advancedToggle = document.querySelector('.collapse input[type="checkbox"]');
+            if (advancedToggle) {
+                advancedToggle.checked = true;
+            }
+        }
+    }
+    
+    // Import configuration from modal
+    function importConfig() {
+        const configText = document.getElementById('import-config-text').value.trim();
+        
+        if (!configText) {
+            showToast(t('config.import.empty'), 'warning');
+            return;
+        }
+        
+        try {
+            const config = JSON.parse(configText);
+            applyConfiguration(config);
+            
+            // Close modal
+            document.getElementById('import-modal').close();
+            
+            // Show success toast
+            showToast(t('config.import.success'), 'success');
+        } catch (error) {
+            console.error('Invalid configuration JSON:', error);
+            showToast(t('config.import.invalid'), 'error');
+        }
+    }
+    
+    // Copy export configuration
+    function copyExportConfig() {
+        const configText = document.getElementById('export-config-text');
+        configText.select();
+        navigator.clipboard.writeText(configText.value).then(() => {
+            showToast(t('config.copied'), 'success');
+        });
+    }
+    
+    // Copy share URL
+    function copyShareUrl() {
+        const shareUrl = document.getElementById('share-url');
+        shareUrl.select();
+        navigator.clipboard.writeText(shareUrl.value).then(() => {
+            showToast(t('config.url.copied'), 'success');
+        });
+    }
+    
+    // Save configuration as file
+    function saveConfigAsFile() {
+        const config = extractConfiguration();
+        const configJson = JSON.stringify(config, null, 2);
+        
+        // Create blob and download
+        const blob = new Blob([configJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hf-deploy-config-${config.space_name || 'config'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast(t('config.export.saved'), 'success');
+    }
+    
+    // Form validation and enhancement
+    document.getElementById('deploy-form').addEventListener('submit', function(e) {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        
+        // Show loading overlay
+        document.getElementById('loading-overlay').style.display = 'flex';
+    });
+    
+    // Initialize all interactive elements after page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Make sure HTMX is initialized
+        if (typeof htmx !== 'undefined') {
+            htmx.process(document.body);
+        }
+        
+        // Initialize eye toggle button for password visibility
+        setTimeout(() => {
+            lucide.createIcons();
+        }, 100);
+    });
+</script>
+{% endblock %} 
